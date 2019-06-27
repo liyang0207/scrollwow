@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>basic demo</title>
+  <link rel="stylesheet" href="./reset.css">
+  <script type="text/javascript" src="../src/init.js"></script>
+  <style>
+    #container{
+      position: relative;
+    }
+    .title{
+      max-width: 40rem;
+      margin: 1rem auto 320px;
+      text-align: center;
+    }
+    #scrolly {
+      position: relative;
+    }
+
+    article {
+      position: relative;
+      padding: 0 1rem;
+      margin: 0 auto;
+      width: 33%;
+    }
+    .step {
+      margin: 2rem auto 4rem auto;
+      background-color: #3b3b3b;
+      color: #fff;
+    }
+    .step.is-active {
+      background-color: goldenrod;
+      color: #3b3b3b;
+    }
+    .step p {
+      text-align: center;
+      padding: 1rem;
+      font-size: 1.5rem;
+    }
+    .debug{
+      position: fixed;
+      top: 253.5px;
+      right: 0;
+      left: 0;
+      border-top: 2px dashed #333;
+    }
+    .bottom{
+      height: 800px;
+    }
+  </style>
+</head>
+<body>
+<div id="container">
+  <div class="title">滚动标题</div>
+  <section id='scrolly'>
+    <article>
+      <div class='step' data-step='1'>
+        <p>STEP 1</p>
+      </div>
+      <div class='step' data-step='2'>
+        <p>STEP 2</p>
+      </div>
+      <div class='step' data-step='3'>
+        <p>STEP 3</p>
+      </div>
+      <div class='step' data-step='4'>
+        <p>STEP 4</p>
+      </div>
+    </article>
+  </section>
+  <div class="debug"></div>
+  <div class="bottom"></div>
+</div>
+<script>
+  let step = document.querySelectorAll('.step');
+  step.forEach((ele, i) => {
+    let p = Math.floor(Math.random() * window.innerHeight / 4);
+    ele.style.padding = p + 'px 0px';
+  })
+  let scroller = scrollwow();
+  scroller.setup({
+    step: '#scrolly .step',
+    offset: 0.3
+  })
+</script>
+</body>
+</html>

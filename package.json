@@ -1,0 +1,12 @@
+{
+  "name": "scrollwow",
+  "version": "1.0.0",
+  "description": "scrollama simplify",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["scroll", "IntersectionObserver"],
+  "author": "liyang",
+  "license": "MIT"
+}
