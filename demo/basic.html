@@ -46,7 +46,7 @@
       border-top: 2px dashed #333;
     }
     .bottom{
-      height: 800px;
+      height: 3000px;
     }
   </style>
 </head>
@@ -78,10 +78,17 @@
     let p = Math.floor(Math.random() * window.innerHeight / 4);
     ele.style.padding = p + 'px 0px';
   })
+
   let scroller = scrollwow();
   scroller.setup({
     step: '#scrolly .step',
     offset: 0.3
+  }).onStepEnter(response => {
+    // console.log(response);
+    response.element.classList.add('is-active');
+  }).onStepExit(response => {
+    // console.log(response);
+    response.element.classList.remove('is-active');
   })
 </script>
 </body>
