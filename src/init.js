@@ -2,16 +2,18 @@
 function scrollwow() {
   let scroll = {};
 
+  let triggerOnce = false;  //触发一次
   let viewHeight = 0;       //窗口高
   let pageHeight = 0;       //文档高度
   let offsetMargin = 0;     //触发线位置
   let previousYOffset = 0;  //暂存Y-Offset,用来判断方向
+  let direction = 'down';   //滚动方向(显示页面下部隐藏内容为向下滚动，反之为上)
 
   let stepEle = [];         //step元素容器
   let ob = {};              //IntersectionObserver实例列表
-  let direction = 'down';   //滚动方向
+  let exclude = [];         //禁止某些step触发钩子
 
-  let cb = {                //回调函数
+  let cb = {                //钩子函数
     stepEnter: () => {},
     stepExit: () => {},
   };
@@ -21,15 +23,41 @@ function scrollwow() {
     previousYOffset = window.pageYOffset;
   }
 
+  function setupIndex() {
+    stepEle.forEach((ele, i) => ele.setAttribute('data-scroll-index', i));
+  }
+
+  function getIndex(element) {
+    return +element.getAttribute('data-scroll-index');
+  }
+
   function setupStates(offset) {
+    offset = Math.min(Math.max(0, offset), 1);
     viewHeight = window.innerHeight;
     pageHeight = document.documentElement.scrollHeight;
     offsetMargin = offset * viewHeight;
   }
 
+  //元素进入
+  function notifyStepEnter(element) {
+    let index = getIndex(element);
+    if (cb.stepEnter && !exclude[index]) {
+      cb.stepEnter({ element, index, direction });
+      if (triggerOnce) exclude[index] = true;
+    }
+  }
+
+  //元素移出
+  function notifyStepExit(element) {
+    let index = getIndex(element);
+    if (cb.stepExit) {
+      cb.stepExit({ element, index, direction });
+    }
+  }
+
+  //处理向下滚动时进入、向上滚动时移出的情况
   function intersectStepAbove([entry]) {
     updateDirection();
-    console.log('hello');
     //isIntersection 正在进入为true, 正在出去为false
     let { isIntersecting, boundingClientRect: { top, bottom }, target } = entry;
 
@@ -37,21 +65,27 @@ function scrollwow() {
     let topAdjusted = top - offsetMargin;
     let bottomAdjusted = bottom - offsetMargin;
 
-    let response = { element: target, direction };
-
+    //元素从下往上进入"可视区域", topAdjusted必须小于0，bottomAdjusted大于0
     if (
       topAdjusted <= 0 &&
       bottomAdjusted >= 0 &&
       isIntersecting &&
       direction === 'down'
     ) {
-      cb.stepEnter && cb.stepEnter(response);
+      notifyStepEnter(target);
     }
-    if (!isIntersecting && direction === 'up') {
-      cb.stepExit && cb.stepExit(response);
+
+    //元素从上往下移出"可视区域", topAdjusted必须大于0
+    if (
+      topAdjusted >= 0 &&
+      !isIntersecting &&
+      direction === 'up'
+    ) {
+      notifyStepExit(target);
     }
   }
 
+  //处理向下滚动时移除、向上滚动时进入的情况
   function intersectStepBelow([entry]) {
     updateDirection();
     let { isIntersecting, boundingClientRect: { top, bottom }, target } = entry;
@@ -59,18 +93,20 @@ function scrollwow() {
     let topAdjusted = top - offsetMargin;
     let bottomAdjusted = bottom - offsetMargin;
 
-    let response = { element: target, direction };
-
     if (
-      topAdjusted <= 0 &&
+      topAdjusted < 0 &&
       bottomAdjusted >= 0 &&
       isIntersecting &&
       direction === 'up'
     ) {
-      cb.stepEnter && cb.stepEnter(response);
+      notifyStepEnter(target);
     }
-    if (!isIntersecting && direction === 'down') {
-      cb.stepExit && cb.stepExit(response);
+    if (
+      bottomAdjusted <= 0 &&
+      !isIntersecting &&
+      direction === 'down'
+    ) {
+      notifyStepExit(target);
     }
   }
 
@@ -104,9 +140,12 @@ function scrollwow() {
     stepBelowIO();
   }
 
-  scroll.setup = ({ step, offset }) => {
+  scroll.setup = ({ step, offset = 0.5, once = false }) => {
     stepEle = Array.from(document.querySelectorAll(step));
 
+    triggerOnce = once;
+
+    setupIndex();
     setupStates(offset);
     scroll.enable();
 
@@ -114,7 +153,6 @@ function scrollwow() {
   }
 
   scroll.enable = () => {
-    console.log('enable');
     handleEnable();
     return scroll;
   }
