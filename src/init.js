@@ -1,6 +1,10 @@
 
 function scrollwow() {
   let scroll = {};
+  let OBSERVER_NAMES = [
+    'stepAbove',
+    'stepBelow'
+  ]
 
   let triggerOnce = false;  //触发一次
   let viewHeight = 0;       //窗口高
@@ -8,10 +12,12 @@ function scrollwow() {
   let offsetMargin = 0;     //触发线位置
   let previousYOffset = 0;  //暂存Y-Offset,用来判断方向
   let direction = 'down';   //滚动方向(显示页面下部隐藏内容为向下滚动，反之为上)
+  let isEnabled = false;    //是否已OB
 
   let stepEle = [];         //step元素容器
   let ob = {};              //IntersectionObserver实例列表
   let exclude = [];         //禁止某些step触发钩子
+  let stepStates = [];      //记录各step当前的状态
 
   let cb = {                //钩子函数
     stepEnter: () => {},
@@ -31,16 +37,28 @@ function scrollwow() {
     return +element.getAttribute('data-scroll-index');
   }
 
+  function disconnectObserver(name) {
+    if (ob[name]) ob[name].forEach(o => o.disconnect());
+  }
+
   function setupStates(offset) {
     offset = Math.min(Math.max(0, offset), 1);
     viewHeight = window.innerHeight;
     pageHeight = document.documentElement.scrollHeight;
     offsetMargin = offset * viewHeight;
+
+    stepStates = stepEle.map(() => ({
+      direction: null,
+      state: null
+    }));
   }
 
   //元素进入
   function notifyStepEnter(element) {
     let index = getIndex(element);
+    stepStates[index].state = 'enter';
+    stepStates[index].direction = direction;
+
     if (cb.stepEnter && !exclude[index]) {
       cb.stepEnter({ element, index, direction });
       if (triggerOnce) exclude[index] = true;
@@ -50,6 +68,9 @@ function scrollwow() {
   //元素移出
   function notifyStepExit(element) {
     let index = getIndex(element);
+    stepStates[index].state = 'exit';
+    stepStates[index].direction = direction;
+
     if (cb.stepExit) {
       cb.stepExit({ element, index, direction });
     }
@@ -65,12 +86,16 @@ function scrollwow() {
     let topAdjusted = top - offsetMargin;
     let bottomAdjusted = bottom - offsetMargin;
 
+    let index = getIndex(target);
+    let ss = stepStates[index];
+
     //元素从下往上进入"可视区域", topAdjusted必须小于0，bottomAdjusted大于0
     if (
       topAdjusted <= 0 &&
       bottomAdjusted >= 0 &&
       isIntersecting &&
-      direction === 'down'
+      direction === 'down' &&
+      ss.state !== 'enter'
     ) {
       notifyStepEnter(target);
     }
@@ -79,7 +104,8 @@ function scrollwow() {
     if (
       topAdjusted >= 0 &&
       !isIntersecting &&
-      direction === 'up'
+      direction === 'up' &&
+      ss.state === 'enter'
     ) {
       notifyStepExit(target);
     }
@@ -92,19 +118,23 @@ function scrollwow() {
 
     let topAdjusted = top - offsetMargin;
     let bottomAdjusted = bottom - offsetMargin;
+    let index = getIndex(target);
+    let ss = stepStates[index];
 
     if (
       topAdjusted < 0 &&
       bottomAdjusted >= 0 &&
       isIntersecting &&
-      direction === 'up'
+      direction === 'up' &&
+      ss.state !== 'enter'
     ) {
       notifyStepEnter(target);
     }
     if (
       bottomAdjusted <= 0 &&
       !isIntersecting &&
-      direction === 'down'
+      direction === 'down' &&
+      ss.state === 'enter'
     ) {
       notifyStepExit(target);
     }
@@ -135,9 +165,16 @@ function scrollwow() {
     })
   }
 
-  function handleEnable() {
-    stepAboveIO();
-    stepBelowIO();
+  function handleEnable(enable) {
+    if (enable && !isEnabled) {
+      OBSERVER_NAMES.forEach(disconnectObserver);
+      stepAboveIO();
+      stepBelowIO();
+      isEnabled = true;
+      return true;
+    }
+    OBSERVER_NAMES.forEach(disconnectObserver);
+    isEnabled = false;
   }
 
   scroll.setup = ({ step, offset = 0.5, once = false }) => {
@@ -153,7 +190,12 @@ function scrollwow() {
   }
 
   scroll.enable = () => {
-    handleEnable();
+    handleEnable(true);
+    return scroll;
+  }
+
+  scroll.disable = () => {
+    handleEnable(false);
     return scroll;
   }
 
@@ -172,6 +214,7 @@ function scrollwow() {
     } else {
       cb.stepExit = callback;
     }
+    return scroll;
   }
 
   return scroll;
