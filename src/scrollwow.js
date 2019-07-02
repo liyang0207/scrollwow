@@ -217,7 +217,13 @@ function scrollwow() {
     return scroll;
   }
 
+  scroll.destroy = () => {
+    handleEnable(false);
+    Object.keys(cb).forEach(key => cb[key] = null);
+    Object.keys(ob).forEach(key => ob[key] = null);
+  }
+
   return scroll;
 }
 
-// export default scrollwow;
+export default scrollwow;

@@ -4,9 +4,18 @@
   "description": "scrollama simplify",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "NODE_ENV=development rollup -c",
+    "build": "NODE_ENV=production rollup -c"
   },
-  "keywords": ["scroll", "IntersectionObserver"],
+  "keywords": [
+    "scroll",
+    "IntersectionObserver"
+  ],
   "author": "liyang",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "rollup": "^1.16.4",
+    "rollup-plugin-filesize": "^6.1.1",
+    "rollup-plugin-terser": "^5.0.0"
+  }
 }
