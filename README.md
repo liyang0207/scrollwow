@@ -73,7 +73,7 @@ options:
 
 如果要本地调试，可以编辑`src/scrollwow.js`文件，之后运行`npm run dev`在`dev`文件夹内生成未压缩的`scrollwow.js`，在相应的html文件内引入该文件即可。
 
-##### 生成版本
+##### 生产版本
 
 直接运行`npm run build`即可生成压缩过的生产版本`build/scrollwow.min.js`。
 
